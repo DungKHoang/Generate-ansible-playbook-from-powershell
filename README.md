@@ -4,18 +4,18 @@ Generate-ansible.PS1 is a PowerShell script that generates ansible playbooks to 
 
 There are two categories of playbooks
 * OV resources - the playbooks are used to create OV resources including
-        * Ethernet networks
-        * Network set
-        * FC / FCOE networks
-        * Logical InterConnect Groups
-        * Uplink Sets
-        * Enclosure Groups
-        * Enclosures
-        * Server Profile Templates with local storage connections and network connections
-        * Server Profiles with local storage connections and network connections
+    * Ethernet networks
+    * Network set
+    * FC / FCOE networks
+    * Logical InterConnect Groups
+    * Uplink Sets
+    * Enclosure Groups
+    * Enclosures
+    * Server Profile Templates with local storage connections and network connections
+    * Server Profiles with local storage connections and network connections
 
 * OV settings - the playbooks are used to configure OV settings including  
-        * Time and locale and NTP servers
+    * Time and locale and NTP servers
 
 
 
