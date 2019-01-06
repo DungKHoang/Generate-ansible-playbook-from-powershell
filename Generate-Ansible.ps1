@@ -1,8 +1,8 @@
 
 # ------------------ Parameters
-Param ( [string]$OVApplianceIP                  = "10.254.13.245", 
-        [string]$OVAdminName                    = "administrator", 
-        [string]$OVAdminPassword                = "P@ssword1",
+Param ( [string]$OVApplianceIP                  = "", 
+        [string]$OVAdminName                    = "", 
+        [string]$OVAdminPassword                = "",
         [string]$OVAuthDomain                   = "local",
         [string]$OneViewModule                  = "HPOneView.410"
 )
