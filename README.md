@@ -20,7 +20,7 @@ There are two categories of playbooks
 
 
 ## Prerequisites
-Both scripts require the OneView PowerShell library at least v4.1 : https://github.com/HewlettPackard/POSH-HPOneView/releases
+Powershell script requires the OneView PowerShell library at least v4.1 : https://github.com/HewlettPackard/POSH-HPOneView/releases
 
 
 ## Syntax
