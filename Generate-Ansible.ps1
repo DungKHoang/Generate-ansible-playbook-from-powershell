@@ -1,8 +1,8 @@
 
 # ------------------ Parameters
-Param ( [string]$OVApplianceIP                  = "", 
-        [string]$OVAdminName                    = "", 
-        [string]$OVAdminPassword                = "",
+Param ( [string]$OVApplianceIP                  = "10.254.13.245", 
+        [string]$OVAdminName                    = "administrator", 
+        [string]$OVAdminPassword                = "P@ssword1",
         [string]$OVAuthDomain                   = "local",
         [string]$OneViewModule                  = "HPOneView.410"
 )
@@ -1869,8 +1869,8 @@ else
     $fwList                                     = Get-HPOVbaseLine
     if ($fwList)
     {
-        $scriptCode                             =  New-Object System.Collections.ArrayList
-        Generate-fwBaseline-Ansible             -OutFile $OVfwBaselineYML                   -List $fwList
+#        $scriptCode                             =  New-Object System.Collections.ArrayList
+#        Generate-fwBaseline-Ansible             -OutFile $OVfwBaselineYML                   -List $fwList
     }
 
 
