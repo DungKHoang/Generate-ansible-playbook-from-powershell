@@ -32,7 +32,7 @@ Both scripts require the OneView PowerShell library at least v4.1 : https://gith
     .\Generate-ansible.ps1 -OVApplianceIP <OV-IP-Address-of-the-master-OV> -OVAdminName <Admin-name> -OVAdminPassword <password> -OVAuthDomain <local or AD-domain>
 
 ```
-Playbooks will be created under the folder ansible-scripts. a oneview_config.json will also be created to provide information to access to teh destination OV instance
+Playbooks will be created under the folder ansible-scripts. a oneview_config.json will also be created to provide information to access to the destination OV instance
 
 ### To run ansible playbooks
 Copy the folder ansible-scripts to a Linux machine configured to run oneview playbooks
