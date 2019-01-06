@@ -2,7 +2,7 @@
 
 Generate-ansible.PS1 is a PowerShell script that generates ansible playbooks to configure new OneView instances. The script queries an existing OV instance (called 'Master') and based on resources and attributes configured in this instance, it will create ansible playbooks. Those playbooks can then be transferred to a linux machine running oneview ansible to be executed and re-create the environment. 
 
-There are two categories of scripts
+There are two categories of playbooks
 * OV resources - the playbooks are used to create OV resources including
         * Ethernet networks
         * Network set
