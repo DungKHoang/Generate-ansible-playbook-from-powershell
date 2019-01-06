@@ -13,6 +13,7 @@ There are two categories of scripts
         * Enclosures
         * Server Profile Templates with local storage connections and network connections
         * Server Profiles with local storage connections and network connections
+        
     * OV settings - the playbooks are used to configure OV settings including  
         * Time and locale and NTP servers
 
