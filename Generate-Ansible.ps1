@@ -3,7 +3,7 @@
 Param ( [string]$OVApplianceIP                  = "", 
         [string]$OVAdminName                    = "", 
         [string]$OVAdminPassword                = "",
-        [string]$OVAuthDomain                   = "local",
+        [string]$OVAuthDomain                   = "",
         [string]$OneViewModule                  = "HPOneView.410"
 )
 
@@ -27,9 +27,6 @@ $Syn12K                   = 'SY12000' # Synergy enclosure type
 
 
 
-    ######################################
-    # REMOVE PRIOR TO MERGE INTO CMDLET
-    ######################################
     [Hashtable]$SnmpAuthLevelEnum = @{
         None        = "noauthnopriv";
         AuthOnly    = "authnopriv";
@@ -267,6 +264,7 @@ Function Prepare-OutFile ([string]$Outfile)
   vars:
     config: "$config_dir/oneview_config.json"
   tasks:
+
 "@
     
 
@@ -278,7 +276,7 @@ Function Prepare-OutFile ([string]$Outfile)
 Function Generate-TimeLocale-Ansible ($List, $OutFile)
 {
 
-    
+        
 
     foreach ($timeLocale in $List)
     {
@@ -292,13 +290,14 @@ Function Generate-TimeLocale-Ansible ($List, $OutFile)
         $syncWithHostParam = $syncWithHostCode = $null
         $pollingParam      = $pollingCode      = $null
 
-        [void]$scriptCode.Add('     - name: Configure time locale in {0}' -f $locale)
-        [void]$scriptCode.Add('       oneview_appliance_time_and_locale_configuration:')
-        [void]$scriptCode.Add('         config: "{{ config }}"')
-        [void]$scriptCode.Add('         state: present')
-        [void]$scriptCode.Add('         data:')
-        [void]$scriptCode.Add('             locale: {0}' -f $locale)
-        [void]$scriptCode.Add('             timezone: {0}' -f $timeZone)
+
+        [void]$scriptCode.Add('     - name: Configure time locale in {0}'                   -f $locale  )
+        [void]$scriptCode.Add('       oneview_appliance_time_and_locale_configuration:'                 )
+        [void]$scriptCode.Add('         config: "{{ config }}"'                                         )
+        [void]$scriptCode.Add('         state: present'                                                 )
+        [void]$scriptCode.Add('         data:'                                                          )
+        [void]$scriptCode.Add('             locale:   {0}'                                  -f $locale  )
+        [void]$scriptCode.Add('             timezone: {0}'                                  -f $timeZone)
 
         # will need to return NTP configuration
         if (-not $syncWithHost)
@@ -306,10 +305,10 @@ Function Generate-TimeLocale-Ansible ($List, $OutFile)
 
             if ($ntpServers)
             {
-                [void]$scriptCode.Add('             ntpServers:')
+                [void]$scriptCode.Add('             ntpServers:'                                        )
                 foreach ($ntp in $ntpServers)
                 {
-                    [void]$scriptCode.Add('                 - {0}' -f $ntp)
+                    [void]$scriptCode.Add('                 - {0}'                           -f $ntp    )
                 }
 
             }
@@ -327,6 +326,7 @@ Function Generate-TimeLocale-Ansible ($List, $OutFile)
 
 Function Generate-AddressPoolSubnet-Ansible ($List, $OutFile)
 {
+    
 
     foreach ($subnet in $list)
     {
@@ -338,28 +338,29 @@ Function Generate-AddressPoolSubnet-Ansible ($List, $OutFile)
         $dns            = $subnet.dnsservers
         $rangeUris      = $subnet.rangeUris
 
-        [void]$scriptCode.Add('     - name: Create subnet {0}'          -f $name)
-        [void]$scriptCode.Add('       oneview_id_pools_ipv4_subnet:')
-        [void]$scriptCode.Add('         config: "{{ config }}"')
-        [void]$scriptCode.Add('         state: present')
-        [void]$scriptCode.Add('         data:')
-        [void]$scriptCode.Add('             name: subnet name {0}'      -f $networkID)
-        [void]$scriptCode.Add('             type: Subnet')
-        [void]$scriptCode.Add('             networkId: {0}'             -f $networkID)
-        [void]$scriptCode.Add('             subnetmask: {0}'            -f $subnetmask)
-        [void]$scriptCode.Add('             gateway: {0}'               -f $gateway)
+
+        [void]$scriptCode.Add('     - name: Create subnet {0}'          -f $name            )
+        [void]$scriptCode.Add('       oneview_id_pools_ipv4_subnet:'                        )
+        [void]$scriptCode.Add('         config: "{{ config }}"'                             )   
+        [void]$scriptCode.Add('         state: present'                                     )
+        [void]$scriptCode.Add('         data:'                                              )
+        [void]$scriptCode.Add('             name: subnet name {0}'      -f $networkID       )
+        [void]$scriptCode.Add('             type: Subnet'                                   )
+        [void]$scriptCode.Add('             networkId: {0}'             -f $networkID       )
+        [void]$scriptCode.Add('             subnetmask: {0}'            -f $subnetmask      )
+        [void]$scriptCode.Add('             gateway: {0}'               -f $gateway         )
 
         if ($domain)
         {
-            [void]$scriptCode.Add('             domain: {0}'                -f $domain)
+            [void]$scriptCode.Add('             domain: {0}'            -f $domain          )
         }
 
         if ($dns)
         {
-            [void]$scriptCode.Add('             dnsServers:')
+            [void]$scriptCode.Add('             dnsServers:'                                )
             foreach ($dnsserver in $dns)
             {
-                [void]$scriptCode.Add('                 - {0}'                  -f $dnsserver)
+                [void]$scriptCode.Add('                 - {0}'          -f $dnsserver       )
             }
         }
 
@@ -377,17 +378,17 @@ Function Generate-AddressPoolSubnet-Ansible ($List, $OutFile)
             $startAddress   = $range.startAddress 
             $endAddress     = $range.endAddress 
 
-           [void]$scriptCode.Add('     - name: Create IPV4 range {0}'          -f $name)
-           [void]$scriptCode.Add('       oneview_id_pools_ipv4_range:')
-           [void]$scriptCode.Add('         config: "{{ config }}"')
-           [void]$scriptCode.Add('         state: present')
-           [void]$scriptCode.Add('         data:')
-           [void]$scriptCode.Add('             name: {0}'      -f $name)
-           [void]$scriptCode.Add('             subnetUri: "{{ subnet_uri }}" ')
-           [void]$scriptCode.Add('             type: Range' )
-           [void]$scriptCode.Add('             rangeCategory: Custom')
-           [void]$scriptCode.Add('             startAddress: {0}'      -f $startAddress)
-           [void]$scriptCode.Add('             endAddress: {0}'      -f $endAddress)
+           [void]$scriptCode.Add('     - name: Create IPV4 range {0}'           -f $name            )
+           [void]$scriptCode.Add('       oneview_id_pools_ipv4_range:'                              )
+           [void]$scriptCode.Add('         config: "{{ config }}"'                                  )
+           [void]$scriptCode.Add('         state: present'                                          )
+           [void]$scriptCode.Add('         data:'                                                   )
+           [void]$scriptCode.Add('             name: {0}'                       -f $name            )
+           [void]$scriptCode.Add('             subnetUri: "{{ subnet_uri }}" '                      )
+           [void]$scriptCode.Add('             type: Range'                                         )
+           [void]$scriptCode.Add('             rangeCategory: Custom'                               )
+           [void]$scriptCode.Add('             startAddress: {0}'               -f $startAddress    )
+           [void]$scriptCode.Add('             endAddress: {0}'                 -f $endAddress)
            [void]$scriptCode.Add('       delegate_to: localhost')
            [void]$scriptCode.Add(' ')
 
@@ -402,18 +403,22 @@ Function Generate-AddressPoolSubnet-Ansible ($List, $OutFile)
 Function Generate-fwBaseline-Ansible ($List, $outFile) # Review RPM file generated
 {
 
+    
+
     foreach ($fwBase in $List)
     {
 
         # - OV strips the dot from the ISOfilename, so we have to re-construct it
         $filename   = rebuild-fwISO -BaselineObj $fwBase
 
-        [void]$scriptCode.Add('     - name: Ensure that firmwate bundle {0} is present')
-        [void]$scriptCode.Add('       oneview_firmware_bundle:')
-        [void]$scriptCode.Add('         config: "{{ config }}"')
-        [void]$scriptCode.Add('         state: present')
-        [void]$scriptCode.Add('         file_path: "{0}"' -f $filename)
-        [void]$scriptCode.Add('       delegate_to: localhost')
+
+        [void]$scriptCode.Add('     - name: Ensure that firmwate bundle {0} is present' )
+        [void]$scriptCode.Add('       oneview_firmware_bundle:'                         )
+        [void]$scriptCode.Add('         config: "{{ config }}"'                         )
+        [void]$scriptCode.Add('         state: present'                                 )
+        [void]$scriptCode.Add('         file_path: "{0}"'                   -f $filename)
+
+        [void]$scriptCode.Add('       delegate_to: localhost' )
         [void]$scriptCode.Add(' ')
     } # end foreach
 
@@ -422,10 +427,150 @@ Function Generate-fwBaseline-Ansible ($List, $outFile) # Review RPM file generat
 
 }
 
+# Region SAN
+Function Generate-SanManager-Ansible ([string]$outfile, $list)
+{
+
+
+    
+
+    foreach ($SM in $list)
+    {
+        $needPassword   = $false
+        $name           = $SM.name
+        $displayName    = $sm.providerDisplayName
+
+
+        [void]$scriptCode.Add('     - name: Ensure that a Device Manager for the {0} provider is present'   -f $displayName )
+        [void]$scriptCode.Add('       oneview_san_manager:'                                                                 )        
+        [void]$scriptCode.Add('         config: "{{ config }}"'                                                             )
+        [void]$scriptCode.Add('         state: present'                                                                     )
+        [void]$scriptCode.Add('         data:'                                                                              )
+        [void]$scriptCode.Add('             name:                   "{0}"'                                  -f $name        )           
+        [void]$scriptCode.Add('             providerDisplayName:    "{0}"'                                  -f $displayName )    
+        [void]$scriptCode.Add('             connectionInfo: '                                                               )
+ 
+
+
+        foreach ($CI in $SM.ConnectionInfo)
+        {
+            if ($CI.Name)
+            {
+                $value      = $CI.value
+                $name       = $CI.Name
+                if ($CI.valueType -eq 'Boolean')
+                {
+                    $value  = if ($CI.value) {'true'} else {'false'}
+                }
+                if ($value)
+                {
+                    [void]$scriptCode.Add('                 - name:             {0}'                        -f $name           )   
+                    [void]$scriptCode.Add('                   value:            "{0}"'                      -f $value          )  
+                }
+
+                if ($name -eq 'Username')      # Brocade BNA
+                {
+                    [void]$scriptCode.Add('                 - name:             {0}'                        -f 'Password'      )   
+                    [void]$scriptCode.Add('                   value:            "{0}"'                      -f '???????'       ) 
+                    $needPassword   = $true
+                } 
+
+                if ($name -eq 'SnmpUserName')      # Ciso/HPE authentication snmp
+                {
+                    [void]$scriptCode.Add('                 - name:             {0}'                        -f 'SnmpAuthString')   
+                    [void]$scriptCode.Add('                   value:            "{0}"'                      -f '???????'       ) 
+                    $needPassword   = $true
+                }
+                                    
+            }
+
+        }
+
+
+        [void]$scriptCode.Add('       delegate_to: localhost')
+        [void]$scriptCode.Add(' ')
+         
+    } # end foreach
+
+
+    $scriptCode= $scriptCode.ToArray() 
+    Out-ToScriptFile -Outfile $outFile 
+
+    if ($needPassword)
+    {
+        write-host -foreground YELLOW "`nUpdate value of either snmpAuthString or Password with correct password to authenticate against SAN managers.`nAnsible playbook to be modified is: $OutFile`n"
+    }
+
+
+}
+
+
+Function Generate-StorageSystem-Script ([string]$outfile, $list)
+{
+
+    
+
+    foreach ($StS in $list)
+    {
+        $displayName         = $Sts.displayName            
+        $hostName            = $Sts.hostname
+        $Username            = $Sts.Credentials.username
+        $password            = '????????'
+        $family              = $sts.family
+        $DomainName          = if ($family -eq 'StoreServ' ) { $Sts.deviceSpecificAttributes.managedDomain } else {''}
+
+        [void]$scriptCode.Add('     - name: Create a Storage System "{0}" '                                 -f $displayName )
+        [void]$scriptCode.Add('       oneview_storage_system:'                                                              )        
+        [void]$scriptCode.Add('         config: "{{ config }}"'                                                             )
+        [void]$scriptCode.Add('         state: present'                                                                     )
+        [void]$scriptCode.Add('         data:'                                                                              )
+        [void]$scriptCode.Add('             credentials:'                                                                   )
+        [void]$scriptCode.Add('                 ip_hostname:               "{0}"'                           -f $hostname    )  
+        [void]$scriptCode.Add('                 username:                  "{0}"'                           -f $username    )  
+        [void]$scriptCode.Add('                 password:                  "{0}"'                           -f $password    )
+        if ($DomainName)
+        {
+            [void]$scriptCode.Add('             managedDomain:                  "{0}"'                      -f $DomainName  )    
+        }
+        
+
+        ## Storage pools
+        $listofStoragePools   = get-HPOVStoragePool -managed -StorageSystem $StS
+        if ($listofStoragePools)
+        {
+            [void]$scriptCode.Add('             managedPools:                  "{0}"'                      -f $DomainName  ) 
+            foreach ($pool in $listofStoragePools)
+            {
+                $name       = $pool.name
+                [void]$scriptCode.Add('                 - domain:                  "{0}"'                  -f $name        )   
+               #[void]$scriptCode.Add('                   type:                "{0}"'                      -f $DomainName  )  
+                [void]$scriptCode.Add('                   name:                    "{0}"'                  -f $DomainName  )  
+               #[void]$scriptCode.Add('                   deviceType:          "{0}"'                      -f $DomainName  )  
+            }  
+        }
+
+        [void]$scriptCode.Add('       delegate_to: localhost')
+        [void]$scriptCode.Add(' ')
+         
+
+    } # end foreach
+
+
+    $scriptCode= $scriptCode.ToArray() 
+    Out-ToScriptFile -Outfile $outFile 
+
+    write-host -foreground YELLOW "`nUpdate value of password with correct password to authenticate against storage system.`nAnsible playbook to be modified is: $OutFile`n"
+ 
+}
+
+
+# endregion Storage
+
 Function Generate-EthernetNetwork-Ansible ($List, $outFile)
 {
 
     
+
     foreach ($net in $List)
     {
         # ----------------------- Construct Network information
@@ -441,37 +586,37 @@ Function Generate-EthernetNetwork-Ansible ($List, $outFile)
         $Private     = if ($net.PrivateNetwork) { 'true' } else { 'false' }
         $purpose     = $net.purpose
 
-        [void]$scriptCode.Add('     - name: Create an Ethernet Network {0}' -f $name)
+        [void]$scriptCode.Add('     - name: Create an Ethernet Network {0}'                 -f $name    )
         [void]$scriptCode.Add('       oneview_ethernet_network:')
         [void]$scriptCode.Add('         config: "{{ config }}"')
         [void]$scriptCode.Add('         state: present')
         [void]$scriptCode.Add('         data:')
-        [void]$scriptCode.Add('             name: "{0}"' -f $name)
-        [void]$scriptCode.Add('             ethernetNetworkType: {0}' -f $vLANType)
-        [void]$scriptCode.Add('             purpose: {0}' -f $purpose)
-        [void]$scriptCode.Add('             smartLink: {0}' -f $smartlink)
-        [void]$scriptCode.Add('             privateNetwork: {0}' -f $Private)
+        [void]$scriptCode.Add('             name:                   "{0}"'              -f $name        )
+        [void]$scriptCode.Add('             ethernetNetworkType:    {0}'                -f $vLANType    )
+        [void]$scriptCode.Add('             purpose:                {0}'                -f $purpose     )
+        [void]$scriptCode.Add('             smartLink:              {0}'                -f $smartlink   )
+        [void]$scriptCode.Add('             privateNetwork:         {0}'                -f $Private     )
 
         if ($vLANType -eq 'Tagged')
         { 
             if (($vLANID) -and ($vLANID -gt 0)) 
             {
-            [void]$scriptCode.Add('             vlanId: {0}' -f $vLANID)
+                [void]$scriptCode.Add('             vlanId:                 {0}'         -f $vLANID     )
             }
 
         } 
 
         if ($pBandwidth -or $mBandwidth)
         {
-            [void]$scriptCode.Add('             bandwidth:')
+            [void]$scriptCode.Add('             bandwidth:'                                             )
             if ($pBandwidth)
             {
-                [void]$scriptCode.Add('                typicalBandwidth: {0}' -f $pBandwidth)
+                [void]$scriptCode.Add('                typicalBandwidth: {0}'           -f $pBandwidth  )
             }
 
             if ($mBandwidth)
             {
-                [void]$scriptCode.Add('                maximumBandwidth: {0}' -f $mBandwidth)
+                [void]$scriptCode.Add('                maximumBandwidth: {0}'           -f $mBandwidth  )
             }
         }
 
@@ -488,7 +633,7 @@ Function Generate-EthernetNetwork-Ansible ($List, $outFile)
 Function Generate-NetworkSet-Ansible ($list, $outFile)
 {
 
-
+    
 
     foreach ($ns in $list)
     {
@@ -498,13 +643,23 @@ Function Generate-NetworkSet-Ansible ($list, $outFile)
         $Mbandwidth         = $ns.MaximumBandwidth 
         $nativenetURI       = $ns.nativeNetworkUri
         $networkURIs        = $ns.networkUris
+        if ($nativenetUri)
+        {
+            $nativeName     = Get-NamefromUri -uri $nativenetUri
+            [void]$scriptCode.Add('     - name: Get uri for native network {0}'               -f $nativeName            )
+            [void]$scriptCode.Add('       oneview_ethernet_network_facts:'                                              )
+            [void]$scriptCode.Add('         config: "{{ config }}"'                                                     )
+            [void]$scriptCode.Add('         name: "{0}"'                                      -f $nativeName            )
 
-        [void]$scriptCode.Add('     - name: Create networkSet {0}'                             -f $name                 )
+            [void]$scriptCode.Add(' ')
+        }
+
+        [void]$scriptCode.Add('     - name: Create networkSet {0}'                            -f $name                  )
         [void]$scriptCode.Add('       oneview_network_set:'                                                             )
         [void]$scriptCode.Add('         config: "{{ config }}"'                                                         )
         [void]$scriptCode.Add('         state: present'                                                                 )
         [void]$scriptCode.Add('         data:'                                                                          )
-        [void]$scriptCode.Add('             name: "{0}"'                                      -f $nsname                )
+        [void]$scriptCode.Add('             name: "{0}"'                                     -f $nsname                 )
         
         if ($networkUris)
         {
@@ -517,8 +672,11 @@ Function Generate-NetworkSet-Ansible ($list, $outFile)
         }
         if ($nativenetUri)
         {
-            $nativeName     = Get-NamefromUri -uri $nativenetUri
-            [void]$scriptCode.Add(('             nativeNetworkUri: "{0}"  #name is "{1}"'    -f $nativenetUri,$nativeName ))
+            $str                = '             nativeNetworkUri: "{{ethernet_networks[0].uri}}" '
+            $str                += '    # nativeNetworkName: "{0}" ' -f $nativeName    
+            [void]$scriptCode.Add($str                                                                                  )
+            #[void]$scriptCode.Add('             #nativeNetworkName: "{0}" ' -f $nativeName                              )
+            #[void]$scriptCode.Add('             nativeNetworkUri: "{{ethernet_networks[0].uri}}" '                      )
         }
 #        if ($PBandwidth)
 #        {
@@ -543,6 +701,8 @@ Function Generate-NetworkSet-Ansible ($list, $outFile)
 Function Generate-FCNetwork-Ansible ($List, $outFile)
 {
 
+    
+
     foreach ($net in $List)
     {
         $name                    = $net.name
@@ -558,32 +718,31 @@ Function Generate-FCNetwork-Ansible ($List, $outFile)
         $fabricUri               = $net.fabricUri 
 
 
-
         if ($type -match 'fcoe') #FCOE network
         {     
-            [void]$scriptCode.Add('     - name: Create fcoe Network {0}' -f $name)
-            [void]$scriptCode.Add('       oneview_fcoe_network:')
-            [void]$scriptCode.Add('         config: "{{ config }}"')
-            [void]$scriptCode.Add('         state: present')
-            [void]$scriptCode.Add('         data:')
-            [void]$scriptCode.Add('             name: "{0}"' -f $name)
+            [void]$scriptCode.Add('     - name: Create fcoe Network {0}'                -f $name                )
+            [void]$scriptCode.Add('       oneview_fcoe_network:'                                                )
+            [void]$scriptCode.Add('         config: "{{ config }}"'                                             )
+            [void]$scriptCode.Add('         state: present'                                                     )
+            [void]$scriptCode.Add('         data:'                                                              )
+            [void]$scriptCode.Add('             name:                   "{0}"'          -f $name                )
 
             if (($vLANID) -and ($vLANID -gt 0)) 
             {
-                [void]$scriptCode.Add('             vlanId: {0}' -f $vLANID)
+                [void]$scriptCode.Add('             vlanId:                 {0}'        -f $vLANID              )
             }
         
         }
 
         else  # FC network
         {
-            [void]$scriptCode.Add('     - name: Create fc Network {0}' -f $name)
-            [void]$scriptCode.Add('       oneview_fc_network:')
-            [void]$scriptCode.Add('         config: "{{ config }}"')
-            [void]$scriptCode.Add('         state: present')
-            [void]$scriptCode.Add('         data:')
-            [void]$scriptCode.Add('             name: "{0}"' -f $name)
-            [void]$scriptCode.Add('             fabricType: {0}' -f $fabricType)
+            [void]$scriptCode.Add('     - name: Create fc Network {0}'                  -f $name                )
+            [void]$scriptCode.Add('       oneview_fc_network:'                                                  )
+            [void]$scriptCode.Add('         config: "{{ config }}"'                                             )
+            [void]$scriptCode.Add('         state: present'                                                     )
+            [void]$scriptCode.Add('         data:'                                                              )
+            [void]$scriptCode.Add('             name:                    "{0}"'         -f $name                )
+            [void]$scriptCode.Add('             fabricType:              {0}'           -f $fabricType          )
 
             if ($fabrictype -eq 'FabricAttach')
             {
@@ -596,7 +755,7 @@ Function Generate-FCNetwork-Ansible ($List, $outFile)
 
                 if ($linkStabilityTime) 
                 {
-                    [void]$scriptCode.Add('             linkStabilityTime : {0}' -f $LinkStabilityTime)
+                    [void]$scriptCode.Add('             linkStabilityTime :     {0}' -f $LinkStabilityTime      )
 
                 }
         
@@ -619,6 +778,7 @@ Function Generate-FCNetwork-Ansible ($List, $outFile)
 ####
 Function Generate-LogicalInterConnectGroup-Ansible($List,$OutFile) 
 {
+    
     foreach ($lig in $list)
     {
         $name                   = $lig.Name
@@ -629,6 +789,7 @@ Function Generate-LogicalInterConnectGroup-Ansible($List,$OutFile)
         $redundancyType         = $lig.redundancyType
 
         $internalNetworkUris    = $lig.InternalNetworkUris
+        $uplinkSets             = $lig.uplinksets | sort-object Name
 
         $ethernetSettings       = $lig.ethernetSettings
         $igmpSnooping           = if ($ethernetSettings.enableIGMPSnooping) {'true'} else {'false'}
@@ -652,37 +813,116 @@ Function Generate-LogicalInterConnectGroup-Ansible($List,$OutFile)
          $sampleCount           = $Telemetry.sampleCount
          $sampleInterval        = $Telemetry.sampleInterval
 
+         [void]$scriptCode.Add('#---------------------------- Logical Interconnect Group {0}'  -f $name       )
+        
+        ## ------------- Get facts for network URI first
+        if ($internalNetworkUris)
+        {
+            $internalNetwork    =  @()
+            foreach ($netUri in $internalNetworkUris)
+            {
+                $netName        = Get-NamefromUri -uri $netUri
+                [void]$scriptCode.Add('     - name: Get uri for network {0}'               -f $netName            )
+                [void]$scriptCode.Add('       oneview_ethernet_network_facts:'                                    )
+                [void]$scriptCode.Add('         config:         "{{ config }}"'                                   )
+                [void]$scriptCode.Add('         name:           "{0}"'                     -f $netName            )
+                
+                $netvar             = "var_$netname" -replace "-" , "_"
+                $var                = '"{{ethernet_networks[0].uri}}"'
+
+               [void]$scriptCode.Add(('     - set_fact:         {0}={1}'  -f $netvar,$var                        ))
+
+                $str                 = '                - "{{' + $netvar + '}}"' + "    # networkName: $netName "   
+                $internalNetwork    += $str
+
+                [void]$scriptCode.Add(' ')
+            }
+
+        }
+
+        if ($uplinkSets)
+        {
+            $uplEthernet            =  $uplFC = $uplfcoe = @()
+            foreach ($upl in $uplinkSets)
+            {
+                $networkURIs            = $upl.networkUris
+                $networkType            = $upl.networkType
+
+                if ($networkUris)
+                {
+                    foreach ($netUri in $networkUris)
+                    {
+                        $netName        = Get-NamefromUri -uri $netUri
+                        $netvar         = "var_$netname" -replace "-" , "_"
+
+                        [void]$scriptCode.Add('     - name: Get uri for network {0}'               -f $netName            )
+                        switch ($networkType)
+                        {
+                            'FibreChannel'      {
+                                                    [void]$scriptCode.Add('       oneview_fc_network_facts:'                 )
+                                                    $var            = '"{{fc_networks[0].uri}}"'   
+                                                    $str            = '                         - "{{' + $netvar + '}}"' + "    # networkName: $netName "  
+                                                    $uplFc          += $str
+
+                                                }
+
+                            'FCOE'              {
+                                                    [void]$scriptCode.Add('       oneview_fcoe_network_facts:'               )
+                                                    $var            = '"{{fcoe_networks[0].uri}}"'    
+                                                    $str            = '                         - "{{' + $netvar + '}}"' + "    # networkName: $netName "  
+                                                    $uplFcoe       += $str
+                                                }
+
+                            'Ethernet'          {
+                                                    [void]$scriptCode.Add('       oneview_ethernet_network_facts:'           )
+                                                    $var            = '"{{ethernet_networks[0].uri}}"'
+                                                    $str            = '                         - "{{' + $netvar + '}}"' + "    # networkName: $netName "  
+                                                    $uplEthernet   += $str
+                                                }
+                        }
+                        
+                        [void]$scriptCode.Add('         config:         "{{ config }}"'                                               )
+                        [void]$scriptCode.Add('         name:           "{0}"'                                      -f $netName       )
+                       [void]$scriptCode.Add(('     - set_fact:         {0}={1}'                                    -f $netvar, $var) )
+                        [void]$scriptCode.Add(' ')
+                    }
+                }
+            }
 
 
-        [void]$scriptCode.Add('     - name: Create logical Interconnect Group {0}' -f $name)
+        }
+
+        ## -------------- End of Get Facts
+
+        [void]$scriptCode.Add('     - name: Create logical Interconnect Group {0}'      -f $name        )
         if ($category -ne 'sas-logical-interconnect-groups')
         {
-            [void]$scriptCode.Add('       oneview_logical_interconnect_group:')
+            [void]$scriptCode.Add('       oneview_logical_interconnect_group:'                          )
         }
         else  # SAS
         {
-            [void]$scriptCode.Add('       oneview_sas_logical_interconnect_group:')   
+            [void]$scriptCode.Add('       oneview_sas_logical_interconnect_group:'                      )   
         }
         
-        [void]$scriptCode.Add('         config: "{{ config }}"')
-        [void]$scriptCode.Add('         state: present')
-        [void]$scriptCode.Add('         data:')
-        [void]$scriptCode.Add('             name: "{0}"' -f $name)
-        [void]$scriptCode.Add('             enclosureType: "{0}"' -f $enclosureType)
-        [void]$scriptCode.Add('             redundancyType: "{0}"' -f $redundancyType)
-        [void]$scriptCode.Add('             interconnectBaySet: {0}' -f $interconnectBaySet)
+        [void]$scriptCode.Add('         config: "{{ config }}"'                                         )
+        [void]$scriptCode.Add('         state: present'                                                 )
+        [void]$scriptCode.Add('         data:'                                                          )
+        [void]$scriptCode.Add('             name:                   "{0}"'         -f $name             )
+        [void]$scriptCode.Add('             enclosureType:          "{0}"'         -f $enclosureType    )
+        [void]$scriptCode.Add('             redundancyType:         "{0}"'         -f $redundancyType   )
+        [void]$scriptCode.Add('             interconnectBaySet:     {0}'           -f $interconnectBaySet)
 
 
         [void]$scriptCode.Add('             enclosureIndexes:')
         foreach ($index in $lig.enclosureIndexes)
         {
-            [void]$scriptCode.Add('                 - {0}' -f $index)
+            [void]$scriptCode.Add('                 - {0}'                          -f $index           )
         }
 
         ### Interconnect Map Template
         $LigInterConnects       = $lig.interconnectmaptemplate.interconnectmapentrytemplates
-        [void]$scriptCode.Add('             interconnectMapTemplate:')
-        [void]$scriptCode.Add('                 interconnectMapEntryTemplates:')
+        [void]$scriptCode.Add('             interconnectMapTemplate:'                                   )
+        [void]$scriptCode.Add('                 interconnectMapEntryTemplates:'                         )
         foreach ($ligIC in $LigInterConnects)
         {
             $ICpermittedInterconnectTypeUri = $ligIC.permittedInterconnectTypeUri
@@ -696,17 +936,17 @@ Function Generate-LogicalInterConnectGroup-Ansible($List,$OutFile)
             {
                 [void]$scriptCode.Add('                     - permittedInterconnectTypeUri: "{0}"' -f $ICpermittedInterconnectTypeUri )  
             }
-            [void]$scriptCode.Add('                       enclosureIndex: "{0}"' -f $enclosureIndex )
-            [void]$scriptCode.Add('                       logicalLocation: ')
-            [void]$scriptCode.Add('                         locationEntries: ')
+            [void]$scriptCode.Add('                       enclosureIndex:               "{0}"' -f $enclosureIndex   )
+            [void]$scriptCode.Add('                       logicalLocation: '                                        )
+            [void]$scriptCode.Add('                         locationEntries: '                                      )
 
             $locationEntries        = $ligIC.logicalLocation.LocationEntries
             foreach ($entry in $locationEntries)
             {
                 $relativeValue      = $entry.relativeValue
                 $type               = $entry.type
-                [void]$scriptCode.Add('                             - relativeValue: {0}' -f $relativeValue )
-                [void]$scriptCode.Add('                               type: "{0}" ' -f $type )
+                [void]$scriptCode.Add('                             - relativeValue:    {0}'    -f $relativeValue   )
+                [void]$scriptCode.Add('                               type:             "{0}" ' -f $type            )
             } #end foreach locationEntries
         
 
@@ -736,17 +976,12 @@ Function Generate-LogicalInterConnectGroup-Ansible($List,$OutFile)
             if ($internalNetworkUris)
             {
                 [void]$scriptCode.Add('             internalNetworkUris:')
-                foreach ($neturi in $internalNetworkUris)
-                {
-                    $netname    = Get-NamefromUri -uri $neturi
-                    [void]$scriptCode.Add(('                - "{0}"    # network name is : {1} ' -f $netUri, $netname))
-                }
-
+                $internalNetwork | % { [void]$scriptCode.Add($_)}   
             }
 
 
             ## -- UplinkSets
-            $uplinkSets             = $lig.uplinksets | sort-object Name
+            #$uplinkSets             = $lig.uplinksets | sort-object Name
             if ($uplinkSets)
             {
                 [void]$scriptCode.Add('             uplinkSets:')
@@ -758,54 +993,74 @@ Function Generate-LogicalInterConnectGroup-Ansible($List,$OutFile)
                     $nativenetURIs          = $Upl.nativeNetworkUri
                     $netTagtype             = $Upl.ethernetNetworkType
                     $lacpTimer              = $Upl.lacpTimer
-                    $networkURIs            = $upl.networkUris
                     $uplLogicalPorts        = $Upl.logicalportconfigInfos
+                    $networkUris            = $upl.networkUris
 
-                    [void]$scriptCode.Add('                 - name: "{0}"' -f $uplName)
-                    [void]$scriptCode.Add('                   networkType: "{0}"' -f $networkType)
-                    [void]$scriptCode.Add('                   mode: "{0}"' -f $ethMode)
+                    [void]$scriptCode.Add('                 - name:             "{0}"' -f $uplName                              )
+                    [void]$scriptCode.Add('                   networkType:      "{0}"' -f $networkType                          )
+                    [void]$scriptCode.Add('                   mode:             "{0}"' -f $ethMode                              )
                     #[void]$scriptCode.Add('                   ethernetnetworkType: "{0}"' -f $netTagtype)
 
                     # Networks in uplinkSets
                     if ($networkUris)
                     {
-                        [void]$scriptCode.Add('                   networkUris:')
-                        foreach ($neturi in $networkUris)
+                        [void]$scriptCode.Add('                   networkUris:'                                                 )
+                        foreach ($netUri in $networkUris)
                         {
-                            $netname    = Get-NamefromUri -uri $neturi
-                            [void]$scriptCode.Add(('                     - "{0}"    # network name is : {1} ' -f $netUri, $netname))
-                        }
+                            $netName        = Get-NamefromUri -uri $netUri
+                        
+                            $netvar                 = "var_$netName" -replace "-" , "_"
+                            $netUriArray            = @()
 
+                            switch ($networkType)
+                            {
+                                'FibreChannel'      { $netUriArray  = $uplFC       }
+                                'FCOE'              { $netUriArray  = $uplFcoe     }
+                                'Ethernet'          { $netUriArray  = $uplEthernet }
+                            }
+
+                            if ($netUriArray)
+                            {
+                                foreach ($netUri in $netUriArray)
+                                {
+                                    if ($netUri -like "*$netvar*")
+                                    {
+                                        [void]$scriptCode.Add($netUri)
+                                    }
+                                }
+                            }
+                        }
+    
                     }
                     else # No networks
                     {
-                        [void]$scriptCode.Add('                   networkUris: []')                  
+                        [void]$scriptCode.Add('                   networkUris: []'                                              )                  
                     }
 
                     if ($uplLogicalPorts)
                     {
-                        [void]$scriptCode.Add('                   logicalPortConfigInfos:')  
+                        [void]$scriptCode.Add('                   logicalPortConfigInfos:'                                      )  
                         foreach ($port in $uplLogicalPorts)
                         {
                             $desiredSpeed           = $port.desiredSpeed
-                            [void]$scriptCode.Add('                     - desiredSpeed: "{0}"' -f $desiredSpeed)
+                            [void]$scriptCode.Add('                     - desiredSpeed: "{0}"'              -f $desiredSpeed    )
 
-                            [void]$scriptCode.Add('                       logicalLocation:')
-                            [void]$scriptCode.Add('                         locationEntries:')
+                            [void]$scriptCode.Add('                       logicalLocation:'                                     )
+                            [void]$scriptCode.Add('                         locationEntries:'                                   )
                             $locationEntries        = $port.logicalLocation.LocationEntries
                             foreach ($entry in $locationEntries)
                             {
                                 $relativeValue      = $entry.relativeValue
                                 $type               = $entry.type
         
-                                [void]$scriptCode.Add('                             - relativeValue: {0}' -f $relativeValue )
-                                [void]$scriptCode.Add('                               type: "{0}" ' -f $type )
+                                [void]$scriptCode.Add('                             - relativeValue: {0}'   -f $relativeValue   )
+                                [void]$scriptCode.Add('                               type: "{0}" '         -f $type            )
                             } #end foreach locationEntries
                         }
                     }
                     else # Logical Ports not defined
                     {
-                        [void]$scriptCode.Add('                   logicalPortConfigInfos: []')  
+                        [void]$scriptCode.Add('                   logicalPortConfigInfos: []'                                   )  
                     }
 
 
@@ -830,7 +1085,7 @@ Function Generate-LogicalInterConnectGroup-Ansible($List,$OutFile)
 
 Function Generate-EnclosureGroup-Ansible ([string]$outfile, $list)
 {
-    
+
     foreach ($EG in $List)
     {
         $name                   = $EG.name
@@ -847,15 +1102,44 @@ Function Generate-EnclosureGroup-Ansible ([string]$outfile, $list)
         $ICbayMappings          = $EG.InterConnectBayMappings
         $enclosuretype          = $EG.enclosureTypeUri.Split('/')[-1]
 
-        [void]$scriptCode.Add('     - name: Create Enclosure Group {0}' -f $name)
-        [void]$scriptCode.Add('       oneview_enclosure_group:')
-        [void]$scriptCode.Add('         config: "{{ config }}"')
-        [void]$scriptCode.Add('         state: present')
-        [void]$scriptCode.Add('         data:')
-        [void]$scriptCode.Add('             name: "{0}"' -f $name)
-        [void]$scriptCode.Add('             ipAddressingMode: "{0}"' -f $ipAddressingMode)
-        [void]$scriptCode.Add('             enclosureCount: {0}' -f $enclosureCount)
-        [void]$scriptCode.Add('             powerMode: {0}' -f $powerMode)
+        [void]$scriptCode.Add('#---------------------------- Enclosure Group  {0}'  -f $name      )
+
+        ## ------------- Get facts for LIG URI first
+        if ($ICbayMappings)
+        {
+            $LigUriStrArray             = @()
+
+            foreach ($ICbay in $ICbayMappings)
+            {
+                $ligUri                 = $ICbay.logicalInterconnectGroupUri
+                $ligname                = Get-NamefromUri $ligUri
+
+                [void]$scriptCode.Add('     - name: Get uri for LIG {0}'                    -f $ligName   )
+                [void]$scriptCode.Add('       oneview_logical_interconnect_group_facts:'                  )
+                [void]$scriptCode.Add('         config:         "{{ config }}"'                           )
+                [void]$scriptCode.Add('         name:           "{0}"'                      -f $ligName   )
+
+                $ligvar                 = "var_$ligname" -replace "-" , "_"
+                $var                    = '"{{logical_interconnect_groups[0].uri}}"'
+
+               [void]$scriptCode.Add(('     - set_fact:         {0}={1}'                    -f $ligvar,$var))
+                [void]$scriptCode.Add(' ')
+
+                $ligUriStr               = '                   logicalInterconnectGroupUri:      "{{' + $ligvar + '}}"' + "  # lig name  $ligname "
+                $ligUriStrArray         += $ligUriStr
+            }
+        }
+        ## End of get facts
+
+        [void]$scriptCode.Add('     - name: Create Enclosure Group {0}' -f $name                                                                        )
+        [void]$scriptCode.Add('       oneview_enclosure_group:'                                                                                         )
+        [void]$scriptCode.Add('         config: "{{ config }}"'                                                                                         )
+        [void]$scriptCode.Add('         state: present'                                                                                                 )
+        [void]$scriptCode.Add('         data:'                                                                                                          )
+        [void]$scriptCode.Add('             name:                                   "{0}"'                                      -f $name                )
+        [void]$scriptCode.Add('             ipAddressingMode:                       "{0}"'                                      -f $ipAddressingMode    )
+        [void]$scriptCode.Add('             enclosureCount:                         {0}'                                        -f $enclosureCount      )
+        [void]$scriptCode.Add('             powerMode:                              {0}'                                        -f $powerMode           )
 
         if ($ICbayMappings)
         {
@@ -867,21 +1151,23 @@ Function Generate-EnclosureGroup-Ansible ([string]$outfile, $list)
                 $enclosureIndex     = $ICbay.enclosureIndex
                 $ligUri             = $ICbay.logicalInterconnectGroupUri
                 $ligname            = Get-NamefromUri $ligUri
+                    $ligvar         = "var_$ligname" -replace "-" , "_"
+                    $ligUriStr      = $ligUriStrArray | where { $_ -like "*$ligvar*"}
 
                 if ($enclosureIndex)
-                {
-                    [void]$scriptCode.Add('                 - interconnectBay: {0}' -f $bayNumber) 
-                    [void]$scriptCode.Add('                   enclosureIndex: {0}' -f $enclosureIndex) 
-                    [void]$scriptCode.Add(('                   logicalInterconnectGroupUri: "{0}" # lig name is: {1}' -f $ligUri, $ligname) )
+                {   
+                    [void]$scriptCode.Add('                 - interconnectBay:                  {0}'                            -f $bayNumber       ) 
+                    [void]$scriptCode.Add('                   enclosureIndex:                   {0}'                            -f $enclosureIndex  ) 
+                    [void]$scriptCode.Add($ligUriStr)
                 }
                 else # EnclosureIndex is $NULl --> the lig is populated in each  enclosure/frame
                 {
                     for ($i=1; $i -le $enclosureCount; $i++)
                     {
                         $enclosureIndex = $i
-                        [void]$scriptCode.Add('                 - interconnectBay: {0}' -f $bayNumber) 
-                        [void]$scriptCode.Add('                   enclosureIndex: {0}' -f $enclosureIndex) 
-                        [void]$scriptCode.Add(('                   logicalInterconnectGroupUri: "{0}" # lig name is: {1}' -f $ligUri, $ligname) )
+                        [void]$scriptCode.Add('                 - interconnectBay:                  {0}'                        -f $bayNumber       ) 
+                        [void]$scriptCode.Add('                   enclosureIndex:                   {0}'                        -f $enclosureIndex  ) 
+                        [void]$scriptCode.Add($ligUriStr)   
                     }
                 } # end else
             } # end ICBay
@@ -902,7 +1188,7 @@ Function Generate-EnclosureGroup-Ansible ([string]$outfile, $list)
 }
 
 
-Function Generate-LogicalEnclosure-Ansible ([string]$outfile, $list) # TO BE REVIEWED
+Function Generate-LogicalEnclosure-Ansible ([string]$outfile, $list) 
 {
     
 
@@ -914,21 +1200,65 @@ Function Generate-LogicalEnclosure-Ansible ([string]$outfile, $list) # TO BE REV
         $FWbaselineUri      = $LE.firmware.firmwareBaselineUri
         $FWinstall          = if ($LE.firmware.forceInstallFirmware) {'true'} else { 'false' }
 
-        $EGName             = Get-NamefromUri -uri $EncGroupUri
+        $egName             = Get-NamefromUri -uri $EncGroupUri
 
-        [void]$scriptCode.Add('     - name: Create logical enclosure {0}' -f $name)
-        [void]$scriptCode.Add('       oneview_logical_enclosure:')
-        [void]$scriptCode.Add('         config: "{{ config }}"')
-        [void]$scriptCode.Add('         state: present')
-        [void]$scriptCode.Add('         data:')
-        [void]$scriptCode.Add('             name: "{0}"' -f $name)
-        [void]$scriptCode.Add(('             enclosureGroupUri: "{0}" # Enclosure Group name is {1}' -f $encGroupUri, $EGName))
-        [void]$scriptCode.Add('             enclosureUris:') 
-        foreach ($uri in $enclUris)
+        [void]$scriptCode.Add('#---------------------------- Logical Enclosure {0}'  -f $name      )
+
+        ## ------------- Get facts for Enclosure Groups and enclosures URI first
+        if ($EncGroupUri)
         {
-            $enclName       = Get-NamefromUri -uri $uri
-            [void]$scriptCode.Add(('                 - "{0}" # Enclosure name is {1}' -f $uri, $enclName))
+            [void]$scriptCode.Add('     - name: Get uri for EnclosureGroup {0}'         -f $egName      )
+            [void]$scriptCode.Add('       oneview_enclosure_group_facts:'                               )
+            [void]$scriptCode.Add('         config:         "{{ config }}"'                             )
+            [void]$scriptCode.Add('         name:           "{0}"'                      -f $egName      )
+
+            $egvar          = "var_$egName" -replace "-" , "_"
+            $var            = '"{{enclosure_groups[0].uri}}"'
+
+            [void]$scriptCode.Add(('     - set_fact:         {0}={1}'                    -f $egvar,$var))
+            [void]$scriptCode.Add(' ')
+
+            $egUriStr       = '             enclosureGroupUri:     "{{' + $egvar + '}}"' + "    # Enclosure Group name $egName "
+            
         }
+
+        if ($enclUris)
+        {
+            $enclUriStrArray             = @()
+            foreach ($uri in $enclUris)
+            {
+                $enclName       = Get-NamefromUri -uri $uri
+                [void]$scriptCode.Add('     - name: Get uri for Enclosure {0}'              -f $enclName    )
+                [void]$scriptCode.Add('       oneview_enclosure_facts:'                                     )
+                [void]$scriptCode.Add('         config:         "{{ config }}"'                             )
+                [void]$scriptCode.Add('         name:           "{0}"'                      -f $enclName    )
+    
+                $enclvar        = "var_$enclName" -replace "-" , "_"
+                $var            = '"{{enclosures[0].uri}}"'
+    
+                [void]$scriptCode.Add(('     - set_fact:         {0}={1}'                    -f $enclvar,$var))
+                [void]$scriptCode.Add(' ')
+    
+                $enclUriStr        = '                 - "{{' + $enclvar + '}}"' + "  # Enclosure name $enclName"
+                $enclUriStrArray   += $enclUriStr
+                
+            }
+
+        }
+        ## End of get facts
+        
+        [void]$scriptCode.Add('     - name: Create logical enclosure {0}' -f $name                                              )
+        [void]$scriptCode.Add('       oneview_logical_enclosure:'                                                               )
+        [void]$scriptCode.Add('         config: "{{ config }}"'                                                                 )
+        [void]$scriptCode.Add('         state: present'                                                                         )
+        [void]$scriptCode.Add('         data:'                                                                                  )
+        [void]$scriptCode.Add('             name:                   "{0}"'                              -f $name                )
+        [void]$scriptCode.Add($egUriStr)
+       #[void]$scriptCode.Add(('             enclosureGroupUri:     "{0}" # Enclosure Group name is {1}' -f $encGroupUri, $EGName))
+
+        [void]$scriptCode.Add('             enclosureUris:'                                                                     ) 
+        $enclUriStrArray | % { [void]$scriptCode.Add($_)}
+
 
         [void]$scriptCode.Add('       delegate_to: localhost')
         [void]$scriptCode.Add(' ')
@@ -951,8 +1281,8 @@ Function Generate-LocalStorage-Ansible
 
     if ($listofSASJBODs)
     {
-        [void]$scriptCode.Add('             localStorage:'                      )
-        [void]$scriptCode.Add('                 sasLogicalJBODs:'                      )
+        [void]$scriptCode.Add('             localStorage:'                                          )
+        [void]$scriptCode.Add('                 sasLogicalJBODs:'                                   )
         foreach ($jbod in $listofSASJBODs)
         {
             $name            = $jbod.name
@@ -965,7 +1295,7 @@ Function Generate-LocalStorage-Ansible
             $eraseData       = if ($jbod.eraseData) {'true'} else {'false'} 
             
             [void]$scriptCode.Add('                     - id: {0}'          -f $id )
-            [void]$scriptCode.Add('                       deviceSlot: "{0}"'          -f $deviceSlot)
+            [void]$scriptCode.Add('                       deviceSlot: "{0}"'            -f $deviceSlot)
             [void]$scriptCode.Add('                       name: "{0}"'                  -f $name)
             [void]$scriptCode.Add('                       numPhysicalDrives: {0}'       -f $numPhysDrives)
             [void]$scriptCode.Add('                       driveMinSizeGB: {0}'          -f $driveMinSizeGB)
@@ -1052,10 +1382,64 @@ Function Generate-LocalStorage-Ansible
     return $ScriptCode
 }
 
-###
+
+function get-networkFacts
+{
+    Param ($List)
+    $netUriStrArray    = $fcUriStrArray = @()
+    foreach ($Conn in $list)
+    {
+        $connName           = $Conn.name
+        $connType           = $Conn.functionType
+        $netUri             = $Conn.networkUri
+        $netname            = $netcategory = $netvar = ""
+        if ($netUri)
+        {
+            $net            = send-hpovrequest -uri  $netUri
+            $netName        = $net.name
+            $netCategory    = $net.category
+            $netvar         = "var_$netname" -replace "-" , "_"
+
+            [void]$scriptCode.Add('     - name: Get uri for network {0}'               -f $netName            )
+            switch ($netCategory)
+            {
+                'network-sets'          {
+                                            [void]$scriptCode.Add('       oneview_network_set_facts:'           )
+                                            $var                = '"{{network_sets[0].uri}}"'
+                                            $str                = '                       networkUri: "{{' + $netvar + '}}"' + "   # network name $netName " 
+                                            $netUriStrArray     += $str
+                                        }
+
+                'ethernet-networks'     {
+                                            [void]$scriptCode.Add('       oneview_ethernet_network_facts:'           )
+                                            $var                = '"{{ethernet_networks[0].uri}}"'
+                                            $str                = '                       networkUri: "{{' + $netvar + '}}"' + "   # network name $netName "
+                                            $netUriStrArray     += $str
+                                        }
+
+                'fc-networks'           {
+                                            [void]$scriptCode.Add('       oneview_fc_network_facts:'                 )
+                                            $var                = '"{{fc_networks[0].uri}}"'   
+                                            $str                = '                       networkUri: "{{' + $netvar + '}}"' + "   # network name $netName " 
+                                            $fcUriStrArray      += $str
+
+                                        }
+            }
+            [void]$scriptCode.Add('         config:         "{{ config }}"'                                               )
+            [void]$scriptCode.Add('         name:           "{0}"'                                      -f $netName       )
+           [void]$scriptCode.Add(('     - set_fact:         {0}={1}'                                    -f $netvar, $var) )
+            [void]$scriptCode.Add(' ')
+        }
+
+
+    }
+
+    return $netUriStrArray, $fcUriStrArray
+}
+
 Function Generate-NetConnection-Ansible
 {
-    Param ( $list)
+    Param ( $list,$netUriArray, $fcUriArray)
 
     [void]$scriptCode.Add('             connectionSettings:'                      )
     [void]$scriptCode.Add('                 connections:'                         )
@@ -1066,12 +1450,14 @@ Function Generate-NetConnection-Ansible
         $connName           = $Conn.name
         $connType           = $Conn.functionType
         $netUri             = $Conn.networkUri
-            $ThisNetwork    = Get-HPOVNetwork | where uri -eq $netUri
-            if (-not $ThisNetwork)                      # could be networkset
-            {
-                $ThisNetwork    = Get-HPOVNetworkSet | where uri -eq $netUri
-            }
-            $netName        = $thisNetwork.name 
+        $netname            = $netvar = ""
+        if ($netUri)
+        {
+            $net            = send-HPOVRequest -uri $netUri
+            $netName        = $net.name
+            $netvar         = "var_$netName" -replace "-" , "_"
+        }
+
         $portID             = $Conn.portID
         $requestedVFs       = $Conn.requestedVFs
         $macType            = $Conn.macType
@@ -1105,12 +1491,23 @@ Function Generate-NetConnection-Ansible
         $bootiscsi          = $boot.iscsi
         
 
+        if ($connType -eq 'Ethernet')
+        {
+            $uriArray       = $netUriStrArray 
+        }
+        else 
+        {
+            $uriArray       = $fcUriStrArray    
+        }
+        $neturiStr             = $uriArray | where { $_ -like "*$netvar*"}
 
         [void]$scriptCode.Add('                     - id: {0}'                                                          -f $connID                      )
         [void]$scriptCode.Add('                       portId: "{0}"'                                                    -f $portID                      )
         [void]$scriptCode.Add('                       name: "{0}"'                                                      -f $connName                    )
         [void]$scriptCode.Add('                       functionType: "{0}"'                                              -f $connType                    )
-       [void]$scriptCode.Add(('                       networkUri: "{0}" # network or networkset name is: "{1}"'         -f $netUri, $netName)           )
+        [void]$scriptCode.Add( $netUriStr)
+        #[void]$scriptCode.Add('                       networkName: "{0}" '                                              -f $netName                     )
+       #[void]$scriptCode.Add(('                       networkUri: "{0}" # network or networkset name is: "{1}"'         -f $netUri, $netName)           )
         [void]$scriptCode.Add('                       requestedMbps: {0}'                                               -f $requestedMbps               )
 
         ## VF function
@@ -1141,50 +1538,55 @@ Function Generate-NetConnection-Ansible
             }
         }
 
-        if ($bootPriority -ne 'NotBootable')
+        if ($bootPriority)
         {
-            $bootvLANId        = if ($bootvLANId) {$bootvLANId} else {'null'}
-
             [void]$scriptCode.Add('                       boot: '       )
             [void]$scriptCode.Add('                         priority: "{0}"'                                                    -f $bootpriority        )
-            [void]$scriptCode.Add('                         bootVlanId: {0}'                                                    -f $bootvLANId          )
-
-            if ($bootEthernetType)
+            if ($bootPriority -ne 'NotBootable')
             {
-                [void]$scriptCode.Add('                         ethernetBootType: "{0}"'                                            -f $bootEthernetType )
+                $bootvLANId        = if ($bootvLANId)   {$bootvLANId} else {'null'}
+
+
+                [void]$scriptCode.Add('                         bootVlanId: {0}'                                                    -f $bootvLANId          )
+
+                if ($bootEthernetType)
+                {
+                    [void]$scriptCode.Add('                         ethernetBootType: "{0}"'                                            -f $bootEthernetType )
+                }
+
+                if ($bootVolumeSource)
+                {
+                    [void]$scriptCode.Add('                         bootVolumeSource: "{0}"'                                            -f $bootVolumeSource )
+                }
+
+                if ($bootTargets)
+                {
+                    $arrayWwpn               = $bootTargets.arrayWwpn 
+                    $lun                     = $bootTargets.lun
+                    [void]$scriptCode.Add('                         targets:'                                                                               )
+                    [void]$scriptCode.Add('                             - arrayWwpn: {0}'                                               -f $arrayWwpn       )
+                    [void]$scriptCode.Add('                               lun: {0}'                                                     -f $lun             )
+                }
+
+                if ($bootiscsi)
+                {
+                    $chapLevel              = $bootiscsi.chapLevel
+                    $firstIP                = $bootiscsi.firstBootTargetIp
+                    $initiatorName          = $bootiscsi.initiatorNameSource
+                    $secondIP               = $bootiscsi.secondBootTargetIp
+                    $secondTarget           = $bootiscsi.secondBootTargetPort
+                    [void]$scriptCode.Add('                         iscsi:'                                                                                 )
+                    [void]$scriptCode.Add('                             chapLevel: "{0}"'                                               -f $chapLevel       )
+                    [void]$scriptCode.Add('                             firstBootTargetIp: {0}'                                         -f $firstIP         )
+                    [void]$scriptCode.Add('                             initiatorNameSource: "{0}"'                                     -f $initiatorName   )
+                    [void]$scriptCode.Add('                             secondBootTargetIp: {0}'                                        -f $secondIP        )
+                    [void]$scriptCode.Add('                             secondBootTargetPort: {0}'                                      -f $secondTarget    )
+                }
+
+
             }
-
-            if ($bootVolumeSource)
-            {
-                [void]$scriptCode.Add('                         bootVolumeSource: "{0}"'                                            -f $bootVolumeSource )
-            }
-
-            if ($bootTargets)
-            {
-                $arrayWwpn               = $bootTargets.arrayWwpn 
-                $lun                     = $bootTargets.lun
-                [void]$scriptCode.Add('                         targets:'                                                                               )
-                [void]$scriptCode.Add('                             - arrayWwpn: {0}'                                               -f $arrayWwpn       )
-                [void]$scriptCode.Add('                               lun: {0}'                                                     -f $lun             )
-            }
-
-            if ($bootiscsi)
-            {
-                $chapLevel              = $bootiscsi.chapLevel
-                $firstIP                = $bootiscsi.firstBootTargetIp
-                $initiatorName          = $bootiscsi.initiatorNameSource
-                $secondIP               = $bootiscsi.secondBootTargetIp
-                $secondTarget           = $bootiscsi.secondBootTargetPort
-                [void]$scriptCode.Add('                         iscsi:'                                                                                 )
-                [void]$scriptCode.Add('                             chapLevel: "{0}"'                                               -f $chapLevel       )
-                [void]$scriptCode.Add('                             firstBootTargetIp: {0}'                                         -f $firstIP         )
-                [void]$scriptCode.Add('                             initiatorNameSource: "{0}"'                                     -f $initiatorName   )
-                [void]$scriptCode.Add('                             secondBootTargetIp: {0}'                                        -f $secondIP        )
-                [void]$scriptCode.Add('                             secondBootTargetPort: {0}'                                      -f $secondTarget    )
-            }
-
-
         }
+
     } #end foreach
 
     return $ScriptCode
@@ -1198,12 +1600,15 @@ Function Generate-NetConnection-Ansible
 
 Function Generate-ProfileTemplate-Ansible ( $List ,$outFile)
 {
-
+    
     foreach ($SPT in $List)
     {
-        # ------- Network Connections
-        $ListofConnections   = $SPT.connectionSettings.connections
+        $name               = $SPT.Name 
+        [void]$scriptCode.Add('#------------------ server profile template {0}' -f $name                    )
 
+        # ------- Network Connections
+        $ListofConnections              = $SPT.connectionSettings.connections
+        $netUriStrArray, $fcUriStrArray = get-networkFacts -list $ListofConnections
 
         # ---------- SAN storage Connection
         $SANStorageList     = $SPT.SanStorage
@@ -1266,8 +1671,6 @@ Function Generate-ProfileTemplate-Ansible ( $List ,$outFile)
         
         $eg                 = send-hpovRequest -uri $egUri
         $egName             = $eg.name
-
-
 
         [void]$scriptCode.Add('     - name: Create server profile template {0}' -f $name                    )
         [void]$scriptCode.Add('       oneview_server_profile_template:'                                     )
@@ -1352,7 +1755,7 @@ Function Generate-ProfileTemplate-Ansible ( $List ,$outFile)
         # ------- network  Connections
         if ($listofConnections)
         {
-           $netConnectionCode    = Generate-NetConnection-Ansible -list $ListofConnections 
+           $netConnectionCode    = Generate-NetConnection-Ansible -list $ListofConnections -netUriArray $netUriStrArray -fcUriArray $fcUriStrArray
         }
         
         [void]$scriptCode.Add('       delegate_to: localhost')
@@ -1373,10 +1776,15 @@ Function Generate-ProfileTemplate-Ansible ( $List ,$outFile)
 Function Generate-Profile-Ansible ( $List ,$outFile)
 {
 
+    
     foreach ($SPT in $List)
     {
+        $name               = $SPT.Name 
+        [void]$scriptCode.Add('#------------------ server profile template {0}' -f $name                    )
+
         # ------- Network Connections
-        $ListofConnections   = $SPT.connectionSettings.connections
+        $ListofConnections              = $SPT.connectionSettings.connections
+        $netUriStrArray, $fcUriStrArray = get-networkFacts -list $ListofConnections
 
         # ---------- SAN storage Connection
         $SANStorageList     = $SPT.SanStorage
@@ -1452,7 +1860,7 @@ Function Generate-Profile-Ansible ( $List ,$outFile)
         $sptName            = Get-NamefromUri -uri $sptUri  
 
 
-
+        [void]$scriptCode.Add('#------------------ server profile {0}'                          -f $name                )
         [void]$scriptCode.Add('     - name: Create server profile {0}'                          -f $name                )
         [void]$scriptCode.Add('       oneview_server_profile:'                                                          )
         [void]$scriptCode.Add('         config: "{{ config }}"'                                                         )
@@ -1558,7 +1966,7 @@ Function Generate-Profile-Ansible ( $List ,$outFile)
             # ------- network  Connections
             if ($listofConnections)
             {
-            $netConnectionCode    = Generate-NetConnection-Ansible -list $ListofConnections 
+                $netConnectionCode    = Generate-NetConnection-Ansible -list $ListofConnections -netUriArray $netUriStrArray -fcUriArray $fcUriStrArray
             }
 
         #[void]$scriptCode.Add('             enclosureBay:               {0}    '                -f $enclosureBay        ) # not working
@@ -1682,6 +2090,14 @@ else
         set-content -path $ovConfigFile -value $config 
     }
 
+    $workingText = @"
+    ## -----------------------------------------------------------------------
+    ##
+    ##          Generate playbooks
+    ##
+    ## -----------------------------------------------------------------------
+"@
+    $workingText | out-Host
 
     $OVEthernetNetworksYML                  = "$scriptPath\ov-ethernetnetwork.yml"
     $OVNetworkSetYML                        = "$scriptPath\ov-networkset.yml"
@@ -1705,8 +2121,8 @@ else
     $OVProfileTemplateLOCALStorageYML       = "ProfileTemplateLOCALStorage.yml"
     $OVProfileTemplateSANStorageYML         = "ProfileTemplateSANStorage.yml"
 
-    $OVSanManagerYML                        = "$scriptPath\SANManager.yml"
-    $OVStorageSystemYML                     = "$scriptPath\StorageSystem.yml"
+    $OVSanManagerYML                        = "$scriptPath\ov-sanmanager.yml"
+    $OVStorageSystemYML                     = "$scriptPath\ov-storagesystem.yml"
     $OVStoragePoolYML                       = "$scriptPath\StoragePool.yml"
     $OVStorageVolumeTemplateYML             = "$scriptPath\StorageVolumeTemplate.yml"
     $OVStorageVolumeYML                     = "$scriptPath\StorageVolume.yml"
@@ -1735,13 +2151,15 @@ else
     $sanManagerList                             = Get-HPOVSanManager 
     if ($sanManagerList)
     {
-#        Generate-sanManager-Script              -OutFile $OVsanManagerYML                   -List  $sanManagerList 
+        $scriptCode                             =  New-Object System.Collections.ArrayList
+        Generate-sanManager-ansible             -OutFile $OVsanManagerYML                   -List  $sanManagerList 
     } 
 
     $storageSystemList                          = get-HPOVStorageSystem
     if ($storageSystemList)
     {
-#        Generate-StorageSystem-Script           -OutFile $OVstorageSystemYML                -List $storageSystemList
+        $scriptCode                             =  New-Object System.Collections.ArrayList
+        Generate-StorageSystem-Script           -OutFile $OVstorageSystemYML                -List $storageSystemList
     }
 
     $storagePoolList                        = Get-HPOVStoragePool | where state -eq 'Managed'
