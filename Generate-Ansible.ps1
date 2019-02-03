@@ -3,7 +3,7 @@
 Param ( [string]$OVApplianceIP                  = "", 
         [string]$OVAdminName                    = "", 
         [string]$OVAdminPassword                = "",
-        [string]$OVAuthDomain                   = "",
+        [string]$OVAuthDomain                   = "local",
         [string]$OneViewModule                  = "HPOneView.410"
 )
 
@@ -27,6 +27,9 @@ $Syn12K                   = 'SY12000' # Synergy enclosure type
 
 
 
+    ######################################
+    # REMOVE PRIOR TO MERGE INTO CMDLET
+    ######################################
     [Hashtable]$SnmpAuthLevelEnum = @{
         None        = "noauthnopriv";
         AuthOnly    = "authnopriv";
@@ -912,6 +915,26 @@ Function Generate-LogicalInterConnectGroup-Ansible($List,$OutFile)
         [void]$scriptCode.Add('             redundancyType:         "{0}"'         -f $redundancyType   )
         [void]$scriptCode.Add('             interconnectBaySet:     {0}'           -f $interconnectBaySet)
 
+        if ($category -ne 'sas-logical-interconnect-groups')
+        {
+            [void]$scriptCode.Add('             ethernetSettings:           '                                           )
+            [void]$scriptCode.Add('                 type:                           "EthernetInterconnectSettingsV4"'   )
+            [void]$scriptCode.Add('                 enableIgmpSnooping:             {0}' -f $igmpSnooping               )
+            if ($igmpIdletimeOut)
+            {
+                [void]$scriptCode.Add('                 igmpIdleTimeoutInterval:        {0}' -f $igmpIdleTimeout        )
+            }
+            [void]$scriptCode.Add('                 enableNetworkLoopProtection:    {0}' -f $networkLoopProtection      )
+            [void]$scriptCode.Add('                 enablePauseFloodProtection:     {0}' -f $pauseFloodProtection       )
+            [void]$scriptCode.Add('                 enableRichTLV:                  {0}' -f $enableRichTLV              )
+            [void]$scriptCode.Add('                 enableTaggedLldp:               {0}' -f $LDPTagging                 )
+            [void]$scriptCode.Add('                 enableStormControl:             {0}' -f $stormControl               )
+            [void]$scriptCode.Add('                 stormControlThreshold:          {0}' -f $stormControlThreshold      )
+            [void]$scriptCode.Add('                 enableFastMacCacheFailover:     {0}' -f $fastMacCacheFailover       )
+            [void]$scriptCode.Add('                 macRefreshInterval:             {0}' -f $macRefreshInterval         )
+        }
+
+
 
         [void]$scriptCode.Add('             enclosureIndexes:')
         foreach ($index in $lig.enclosureIndexes)
@@ -955,21 +978,6 @@ Function Generate-LogicalInterConnectGroup-Ansible($List,$OutFile)
 
         if ($category -ne 'sas-logical-interconnect-groups')
         {
-            [void]$scriptCode.Add('             #enableIgmpSnooping: {0}' -f $igmpSnooping)
-            if ($igmpIdletimeOut)
-            {
-                [void]$scriptCode.Add('             #igmpIdleTimeoutInterval: {0}' -f $igmpIdleTimeout)
-            }
-            [void]$scriptCode.Add('             #enableNetworkLoopProtection: {0}' -f $networkLoopProtection)
-            [void]$scriptCode.Add('             #enablePauseFloodProtection: {0}' -f $pauseFloodProtection)
-            [void]$scriptCode.Add('             #enableRichTLV: {0}' -f $enableRichTLV)
-            [void]$scriptCode.Add('             #enableTaggedLldp: {0}' -f $LDPTagging)
-            [void]$scriptCode.Add('             #enableStormControl: {0}' -f $stormControl)
-            [void]$scriptCode.Add('             #stormControlThreshold: {0}' -f $stormControlThreshold)
-            [void]$scriptCode.Add('             #fastMacCacheFailover: {0}' -f $fastMacCacheFailover)
-            [void]$scriptCode.Add('             #macRefreshInterval: {0}' -f $macRefreshInterval)
-
-
 
 
             # Internal Networks in LIG
@@ -1269,6 +1277,44 @@ Function Generate-LogicalEnclosure-Ansible ([string]$outfile, $list)
 
 }
 
+#region OS Deployment
+Function Generate-osDeploymentServer-Ansible ([string]$outfile, $list) 
+{
+    foreach ($osds in $list)
+    {
+        $name                       = $osds.name
+        $description                = $osds.description
+        $mgmtNetworkUri             = $osds.mgmtNetworkUri
+        $primaryActiveApplianceUri  = $osds.primaryActiveAppliance
+
+        $i3sApplianceName           = Get-NamefromUri -uri $primaryActiveApplianceUri
+        
+
+        $mgmtNetworkName            = get-namefromUri -uri $mgmtNetworkUri
+
+        [void]$scriptCode.Add('#---------------------------- os Deployment Server  {0}'                 -f $name                )
+        [void]$scriptCode.Add('     - name: Create OS Deployment Server {0}'                            -f $name                )
+        [void]$scriptCode.Add('       oneview_os_deployment_server:'                                                            )
+        [void]$scriptCode.Add('         config: "{{ config }}"'                                                                 )
+        [void]$scriptCode.Add('         state: present'                                                                         )
+        [void]$scriptCode.Add('         data:'                                                                                  )
+        [void]$scriptCode.Add('             name:                   "{0}"'                              -f $name                )
+        [void]$scriptCode.Add('             mgmtNetworkName:        "{0}"'                              -f $mgmtNetworkName     )
+        [void]$scriptCode.Add('             applianceName:          "{0}"'                              -f $i3sApplianceName    )
+        if (-not [String]::IsNullOrWhiteSpace($description))
+        {
+            [void]$scriptCode.Add('             description:            "{0}"'                              -f $description     )
+        }
+
+        [void]$scriptCode.Add('       delegate_to: localhost')
+        [void]$scriptCode.Add(' ')
+    }
+    $scriptCode = $scriptCode.ToArray() 
+    Out-ToScriptFile -Outfile $outFile 
+}
+
+
+#endregion OS Deployment
 
 
 # region ServerProfile
@@ -1629,7 +1675,7 @@ Function Generate-ProfileTemplate-Ansible ( $List ,$outFile)
         $wwnType            = $SPT.wwnType
         $snType             = $SPT.serialNumberType       
         $iscsiType          = $SPT.iscsiInitiatorNameType 
-        $osdeploysetting    = $SPT.osDeploymentSettings
+        $osDeploySettings   = $SPT.osDeploymentSettings
 
         $fw                 = $SPT.firmware
         $isFwManaged        = $fw.manageFirmware
@@ -1701,6 +1747,34 @@ Function Generate-ProfileTemplate-Ansible ( $List ,$outFile)
         
         }
            
+        # OS DeploymentSettings
+        if ($osDeploySettings)
+        {
+            $dplanuri       = $osDeploySettings.osDeploymentPlanUri
+            try 
+            {
+                $dplan          = Send-HPOVRequest -uri $dplanuri                
+            }
+            catch 
+            {
+                $dplan          = $Null    
+            }
+
+            if ($dplan)
+            {
+                $dplanName      = $dplan.Name
+                $params         = $dplan | Get-HPOVOSDeploymentPlanAttribute
+                [void]$scriptCode.Add('             osDeploymentSettings:'                                      )    
+                [void]$scriptCode.Add('                 osDeploymentPlanName:      "{0}"'    -f $dplanName      )
+                [void]$scriptCode.Add('                 osCustomAttributes:'                                    )
+                foreach ($p in $params)
+                {
+                    [void]$scriptCode.Add('                     name:      "{0}"'    -f $p.name                 ) 
+                    [void]$scriptCode.Add('                     value:     {0}'      -f $p.value                ) 
+                }
+            }
+
+        }
 
         #Manage Boot
         if ($isbootModeManaged)
@@ -2139,7 +2213,7 @@ else
     $OVProxyYML                             = "$scriptPath\Proxy.yml"
     $OVfwBaselineYML                        = "$scriptPath\ov-fwbaseline.yml"
 
-    #$OVOSDeploymentYML                      = "$scriptPath\OSDeployment.yml"
+    $OVosDeploymentYML                      = "$scriptPath\ov-osdeployment.yml"
     #$OVUsersYML                             = "$scriptPath\Users.yml"
     #$OVBackupConfig                         = "$scriptPath\BackupConfiguration.yml"
     #$OVRSConfig                             = "$scriptPath\OVRSConfiguration.yml"
@@ -2238,7 +2312,13 @@ else
         Generate-Profile-Ansible                -OutFile $OVprofileYML                      -List $serverProfileList 
     }
 
-
+    $osDeploymentServerList                     = Get-HPOVOSDeploymentServer
+    if ($osDeploymentServerList)
+    { 
+        $scriptCode                             =  New-Object System.Collections.ArrayList
+        Generate-osDeploymentServer-Ansible     -OutFile $OVosDeploymentYML                 -List $osDeploymentServerList  
+    }
+    
     $smtpConfigList                             = Get-HPOVSMTPConfig
     if ($smtpConfigList.SenderEmailAddress )
     {
