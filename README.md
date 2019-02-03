@@ -11,8 +11,9 @@ There are two categories of playbooks
     * Uplink Sets
     * Enclosure Groups
     * Enclosures
-    * Server Profile Templates with local storage connections and network connections
+    * Server Profile Templates with local storage connections and network connections - OS deploy plan and OS Deployment settings
     * Server Profiles with local storage connections and network connections
+    * OS Deployment Server
 
 * OV settings - the playbooks are used to configure OV settings including  
     * Time and locale and NTP servers
